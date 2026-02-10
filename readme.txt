@@ -1,58 +1,43 @@
-1. Sistem Mimarisi
-Sistemini bir "NLU (Doğal Dil Anlama) Boru Hattı" üzerine kuracağız.
+Google Cloud VM Deployment Guide
+Requirements
+Python 3.10+
 
-Arayüz (Frontend): React veya Next.js (Manuel girişler ve chat ekranı burada olur).
+4GB+ RAM (Required for NLU models)
 
-API Katmanı (Backend): Python FastAPI. (Hafif ve asenkrondur, AI modelleriyle çok hızlı çalışır).
+Internet access (For initial model download)
 
-Zeka (NLU): Hugging Face üzerinden çalışan hafifletilmiş Türkçe modeller.
+Installation
+1. Install System Packages
+Run the following command to prepare the environment:
 
-Veritabanı: SQLite. (Dosya tabanlıdır, kurulum gerektirmez ama tam SQL desteği sunar. VM üzerinde yönetmesi çok kolaydır).
+2. Copy Project Files
+Move your project files to the VM (using scp, git clone, etc.):
 
+3. Create Python Virtual Environment
+Keep your dependencies isolated and clean:
 
-2. Hafif Ama Güçlü: Model Seçimi
-7/24 çalışacak bir sistemde RAM kullanımını düşük tutmak için "Distilled" (damıtılmış) modelleri tercih etmeliyiz.
+4. Manual Testing
+Before going live, test the application manually:
 
-Öneri: dbmdz/distilbert-base-turkish-cased
+Open http://<VM_IP>:8000 in your browser to verify.
 
-Neden: Standart BERT modellerinden yaklaşık %40 daha küçüktür ve %60 daha hızlıdır, ancak performansı ona çok yakındır. 4GB RAM'li bir VM'de çok rahat çalışır.
+5. Setup Systemd Service (For 24/7 Operation)
+This ensures the app restarts automatically if the server reboots:
 
+6. Check Service Status
+Monitor the health of your application:
 
-3. Türkçe Kelime ve Cümleleri Anlamak İçin Strateji
-Türkçe, eklemeli bir dil olduğu için "kalem", "kalemler", "kalemi" kelimelerinin aynı şeyi ifade ettiğini sisteme öğretmen gerekir. Bunun için şu 3 adımı uygulamalıyız:
+Firewall (GCP)
+You must open port 8000 in the GCP Console to allow traffic:
 
-A. Niyet Algılama (Intent Detection)
-Kullanıcının ne yapmak istediğini anlamalıyız.
+Navigate to VPC Network > Firewall.
 
-Örnek: "X ürününü ekle" -> Intent: add_item
+Create a new rule:
 
-Örnek: "X nerede?" -> Intent: query_location
+Direction: Ingress
 
-B. Varlık İsmi Tanıma (NER - Named Entity Recognition)
-Cümle içindeki "özne"yi ve "yer"i cımbızla çekmeliyiz.
+Targets: All instances / Specific tag
 
-Model: akdeniz27/bert-base-turkish-cased-ner
+Source IP ranges: 0.0.0.0/0
 
-Girdi: "Mavi dosyayı üst rafa koy."
-
-Çıktı: { "ürün": "Mavi dosya", "konum": "üst raf" }
-
-C. Normalizasyon ve Zemberek
-Türkçe karakterleri ve ekleri yönetmek için Zemberek (veya Python için zeyrek) kullanabilirsin. Kullanıcı "kalemler nerede" dediğinde, sistem "kalemler" kelimesini "kalem" köküne indirger ve SQL'de arama yaparken hata payını düşürür.
-
-
-
-
-Dil ModeliDistilBERT (Turkish)Cümleyi anlar ve vektöre çevirir.VeritabanıSQLiteEnvanter bilgilerini (ad, miktar, konum) saklar.BackendFastAPIAI modeli ile Veritabanı arasındaki köprü.Kütüphanelertransformers, torch, spacyNLP işlemleri için temel araçlar.
-
-
-
-
-
-CREATE TABLE inventory (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    item_name TEXT NOT NULL,
-    location TEXT NOT NULL,
-    quantity INTEGER DEFAULT 1,
-    last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+Protocols and ports: tcp:8000
